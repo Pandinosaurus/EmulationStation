@@ -76,6 +76,7 @@ Font::Font(int size, const std::string& path) : mSize(size), mPath(path)
 {
 	assert(mSize > 0);
 
+	mTextures.reserve(10);
 	mLoaded = true;
 	mMaxGlyphHeight = 0;
 
@@ -209,6 +210,13 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 		// will this one work?
 		if(tex_out->findEmpty(glyphSize, cursor_out))
 			return; // yes
+	}
+
+	if(mTextures.size() >= mTextures.capacity())
+	{
+		LOG(LogError) << "Glyph too many to create a new texture!";
+		tex_out = NULL;
+		return;
 	}
 
 	// current textures are full,
@@ -604,12 +612,12 @@ float Font::getNewlineStartOffset(const std::string& text, const unsigned int& c
 			return 0;
 		case ALIGN_CENTER:
 			{
-				unsigned int endChar = (unsigned int)text.find('\n', charStart);
+				size_t endChar = text.find('\n', charStart);
 				return (xLen - sizeText(text.substr(charStart, endChar != std::string::npos ? endChar - charStart : endChar)).x()) / 2.0f;
 			}
 		case ALIGN_RIGHT:
 			{
-				unsigned int endChar = (unsigned int)text.find('\n', charStart);
+				size_t endChar = text.find('\n', charStart);
 				return xLen - (sizeText(text.substr(charStart, endChar != std::string::npos ? endChar - charStart : endChar)).x());
 			}
 		default:
@@ -684,7 +692,7 @@ TextCache* Font::buildTextCache(const std::string& text, Vector2f offset, unsign
 	unsigned int i = 0;
 	for(auto it = vertMap.cbegin(); it != vertMap.cend(); it++)
 	{
-		TextCache::VertexList& vertList = cache->vertexLists.at(i);
+		TextCache::VertexList& vertList = cache->vertexLists.at(i++);
 
 		vertList.textureIdPtr = &it->first->textureId;
 		vertList.verts = it->second;
